@@ -1,5 +1,5 @@
 # ============================================
-# Root .gitignore (covers both backend/ & frontend/)
+# Root .gitignore (covers backend/ & frontend/)
 # ============================================
 
 # ===== Python (Backend) =====
@@ -8,10 +8,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-# Build artefacts live at the REPO ROOT. Anchoring with a leading slash matters:
-# an unanchored `lib/` also matches frontend/src/lib, which silently excluded the
-# entire Cesium globe + utils + constants from git (16 source files, never
-# committed). Same hazard for the other setuptools output dirs below.
 /build/
 /develop-eggs/
 /dist/
@@ -35,19 +31,22 @@ venv/
 ENV/
 env/
 .python-version
+!backend/.python-version
 
-# Testing (Python)
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .mypy_cache/
 .ruff_cache/
+.ipynb_checkpoints/
 
-# Data files (বড় ফাইল)
+# ===== Data files =====
 *.h5
 *.hdf5
 *.he5
+*.npy
 *.tif
 *.tiff
 *.nc
@@ -55,10 +54,12 @@ data/
 outputs/
 *.geojson
 *.geotiff
-*.png
-*.jpg
-!docs/**/*.png
-!docs/**/*.jpg
+nisar_data/
+.netrc
+_netrc
+*.zip
+nasa1/
+nasa1.zip
 
 # ===== Node (Frontend) =====
 node_modules/
@@ -70,7 +71,7 @@ build/
 next-env.d.ts
 coverage/
 
-# ===== Environment files =====
+# ===== Environment =====
 .env
 .env.local
 .env*.local
@@ -83,112 +84,24 @@ coverage/
 Thumbs.db
 *.pem
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+*.bak
+*.bak_*
+*.backup_*
 .vscode/*
 !.vscode/extensions.json
 .idea/
 *.swp
 *.swo
 
-# ===== Self-hosted Cesium (frontend) =====
+# ===== Output artifacts =====
+# Pipeline outputs are regenerated per analysis. On Railway (ephemeral FS),
+# the deployed backend runs the pipeline on demand; results persist only for
+# the container's lifetime.
+output/
+
+# ===== Self-hosted Cesium =====
 public/cesium
 .tools/.tmp
 
-# The generic `.python-version` above is meant for local virtualenv markers, but
-# the backend's deploy pin is a real artefact: Nixpacks reads it to choose the
-# interpreter, so it must be committed.
-!backend/.python-version
-
-# ===== Jupyter =====
-.ipynb_checkpoints/
-
-
-# ================= Output Files (Generated) =================
-# Raw pipeline output stays out of git: the intermediate GeoTIFFs and NPY
-# arrays are tens of megabytes each, and the HDF5 granules behind them are
-# 3.5 GB and cannot be deployed at all.
-*.npy
-*.tif
-*.tiff
-*.h5
-*.hdf5
-
-# EXCEPTION: the small per-module result artifacts ARE committed, so a deployed
-# backend - which has no granules and therefore cannot re-run the pipeline - can
-# still serve real results and preview images. Curated set is ~13 MB:
-#   <module>_metadata.json   what /api/results reads
-#   <module>_preview.png     the overlay image
-#   <module>_mask.tif        the downloadable GeoTIFF
-#
-# These rules must come AFTER the broad globs above, because the LAST matching
-# pattern decides. A bare `output/` would also be wrong: git would not descend
-# into the directory, so no negation inside it could ever re-include a file.
-/output/*
-!/output/*/
-/output/*/*
-!/output/*/*_metadata.json
-!/output/*/*_preview.png
-!/output/*/*_detection.png
-!/output/*/*_mask.tif
-
-# Re-exclude directories that only happen to match the negations above:
-#   _baseline_feni_backup/  a local reproducibility baseline, not a deliverable
-#   preview/                stale PNGs from an earlier pipeline run
-/output/_baseline_feni_backup/
-/output/preview/
-
-# ================= NISAR Data =================
-nisar_data/
-
-# ================= Extra Files =================
-nasa1/
-nasa1.zip
-*.zip
-
-# ================= Auth =================
-.netrc
-_netrc
-
-# ================= Stray nested copy =================
-# A second full checkout of the frontend (with its own node_modules) that
-# `tsconfig.json` was type-checking, which broke `next build`. Now excluded from
-# the build; also kept out of git so it cannot bloat the repo (~600 MB).
+# ===== Stray nested copy =====
 frontend/earth-metamorphosis/
-
-# ================= Editor / manual backups =================
-# Snapshot copies left in the tree (e.g. Workspace.tsx.backup_20261007_210000).
-# These sit inside tsconfig's include and previously produced build errors.
-*.backup_*
-*.bak
-# Backup files
-*.bak_*
-*.bak
-
-
-# ---- Earth Metamorphosis runtime artifacts ----
-# Pipeline outputs (masks, previews, metadata) are regenerated per analysis.
-output/
-nisar_data/
-
-# Backup files (created by edit scripts)
-*.bak
-*.bak_*
-*.backup_*
-
-# Python
-__pycache__/
-*.pyc
-backend/venv/
-venv/
-
-# Next.js
-frontend/.next/
-frontend/out/
-frontend/node_modules/
-
-# OS
-.DS_Store
-Thumbs.db
