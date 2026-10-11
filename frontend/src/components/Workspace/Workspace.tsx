@@ -195,7 +195,7 @@ export function Workspace({ className }: WorkspaceProps) {
             onError={() => setGlobeFailed(true)}
             floodMaskActive={showFloodOverlay}
             modisActive={showModis}
-            overlayUrl={moduleResult?.previewUrl ?? null}
+            overlayUrl={moduleResult?.overlayBase64 ?? moduleResult?.previewBase64 ?? moduleResult?.previewUrl ?? null}
           >
             <div className="absolute bottom-16 left-4 z-chrome flex flex-wrap items-center gap-2">
               <Button

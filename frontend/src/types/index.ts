@@ -213,6 +213,10 @@ export interface ResultDataset {
   geotiffUrl?: string | null;
   /** Backend-relative path; must be prefixed with the API base to load. */
   previewUrl?: string | null;
+  /** Inline data URL for the transparent red mask (avoids storage). */
+  overlayBase64?: string | null;
+  /** Inline data URL for the 2-panel preview collage. */
+  previewBase64?: string | null;
   /** False when no pipeline artifacts exist yet for this module. */
   available?: boolean;
   message?: string;

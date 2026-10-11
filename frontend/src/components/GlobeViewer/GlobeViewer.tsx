@@ -311,7 +311,11 @@ export function GlobeViewer({
       const [west, south, east, north] = activeBbox;
 
       const provider = new cesium.SingleTileImageryProvider({
-        url: `${apiBase}${overlayUrl.replace("_preview", "_overlay")}`,
+        // Prefer base64 data URL when the backend embeds it; fall back to
+        // the artifacts path for the file-served case.
+        url: overlayUrl.startsWith("data:image")
+          ? overlayUrl
+          : `${apiBase}${overlayUrl.replace("_preview", "_overlay")}`,
         rectangle: cesium.Rectangle.fromDegrees(west, south, east, north),
         tileWidth: 1024,
         tileHeight: 1024,
