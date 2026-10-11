@@ -1376,17 +1376,51 @@ def download_file(granule_id):
         print(f"[DOWNLOAD] Already exists: {existing[0]}")
         return existing[0]
 
-    # Download
-    earthaccess.login(strategy="netrc", persist=True)
-    results = earthaccess.search_data(
-        short_name="NISAR_L2_GCOV_PROVISIONAL_V1",
-        count=200,
-    )
+    # ────────────────────────────────────────────────────────────────
+    # Download via direct CMR query + concept-id-based earthaccess.download.
+    #
+    # The generic `earthaccess.search_data(count=N)` call is very slow for
+    # NISAR's catalog (30-90s, sometimes hang) because it paginates through
+    # the whole collection client-side. Querying CMR directly with the
+    # `granule_ur` parameter returns the target in ~1s.
+    # ────────────────────────────────────────────────────────────────
+    import requests as _requests
 
-    matching = [r for r in results if r.get("meta", {}).get("native-id") == granule_id]
-    if not matching:
+    print(f"[DOWNLOAD] CMR lookup: {granule_id[-60:]}", flush=True)
+
+    cmr_url = "https://cmr.earthdata.nasa.gov/search/granules.json"
+    try:
+        cmr_resp = _requests.get(
+            cmr_url,
+            params={
+                "short_name": "NISAR_L2_GCOV_PROVISIONAL_V1",
+                "granule_ur": granule_id,
+                "page_size": 5,
+            },
+            timeout=30,
+        )
+        cmr_resp.raise_for_status()
+        entries = cmr_resp.json().get("feed", {}).get("entry", [])
+        print(f"[DOWNLOAD] CMR entries: {len(entries)}", flush=True)
+    except Exception as exc:
+        print(f"[DOWNLOAD] CMR query failed: {exc}", flush=True)
+        entries = []
+
+    if not entries:
         raise Exception(f"File not found: {granule_id}")
 
+    concept_id = entries[0].get("id")
+    if not concept_id:
+        raise Exception(f"No concept-id for {granule_id}")
+    print(f"[DOWNLOAD] concept-id: {concept_id}", flush=True)
+
+    # Download using earthaccess — it accepts concept_id, so no slow search
+    earthaccess.login(strategy="netrc", persist=True)
+    matching = earthaccess.search_data(concept_id=concept_id)
+    if not matching:
+        raise Exception(f"earthaccess could not resolve concept {concept_id}")
+
+    print(f"[DOWNLOAD] Starting download to {NISAR_DATA_FOLDER}", flush=True)
     earthaccess.download(matching, local_path=NISAR_DATA_FOLDER)
 
     files = glob.glob(pattern)
