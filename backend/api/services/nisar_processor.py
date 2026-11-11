@@ -1679,8 +1679,8 @@ def detect_flood(before_data, after_data, job_id):
         },
         "geotiffUrl": geotiff_url,
         "previewUrl": preview_url,
-        "overlayBase64": overlay_b64,
-        "previewBase64": preview_b64,
+        "overlayBase64": locals().get("overlay_b64"),
+        "previewBase64": locals().get("preview_b64"),
         "metadata": {
             "beforeDate": before_data["date"],
             "afterDate": after_data["date"],
